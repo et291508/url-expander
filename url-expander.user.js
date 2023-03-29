@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         URL Expander
 // @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  Expand TinyURL and Reurl.cc links to their original URLs
-// @author       Your Name
+// @version      1.2
+// @description  Expand TinyURL, Reurl.cc, and Bit.ly links to their original URLs
+// @author       ChatGPT
 // @match        *://*/*
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -59,6 +59,28 @@
         });
     }
 
+    async function expandBitly(bitlyUrl) {
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: bitlyUrl + "+",
+                onload: function (response) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(response.responseText, "text/html");
+                    const redirectUrl = doc.querySelector(".item-detail--title");
+                    if (redirectUrl) {
+                        resolve(redirectUrl.textContent.trim());
+                    } else {
+                        reject("Original URL not found");
+                    }
+                },
+                onerror: function (error) {
+                    reject(error);
+                }
+            });
+        });
+    }
+
     const tinyUrls = document.querySelectorAll('a[href^="https://tinyurl.com/"]');
     for (const link of tinyUrls) {
         try {
@@ -76,6 +98,16 @@
             replaceLink(link, expandedUrl);
         } catch (error) {
             console.error(`Error expanding Reurl.cc: ${error}`);
+        }
+    }
+
+    const bitlyUrls = document.querySelectorAll('a[href^="https://bit.ly/"]');
+    for (const link of bitlyUrls) {
+        try {
+            const expandedUrl = await expandBitly(link.href);
+            replaceLink(link, expandedUrl);
+        } catch (error) {
+            console.error(`Error expanding Bit.ly: ${error}`);
         }
     }
 })();
