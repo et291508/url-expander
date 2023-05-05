@@ -67,7 +67,7 @@
                 onload: function (response) {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(response.responseText, "text/html");
-                    const redirectUrl = doc.querySelector(".item-detail--title");
+                    const redirectUrl = doc.querySelector(".item-detail--url");
                     if (redirectUrl) {
                         resolve(redirectUrl.textContent.trim());
                     } else {
